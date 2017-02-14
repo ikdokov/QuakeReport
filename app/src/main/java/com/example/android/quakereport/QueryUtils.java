@@ -33,6 +33,7 @@ public class QueryUtils {
     private static final String KEY_MAGNITUDE = "mag";
     private static final String KEY_PLACE = "place";
     private static final String KEY_TIME = "time";
+    private static final String KEY_URL = "url";
 
     public static ArrayList<Earthquake> extractEartquakes() {
 
@@ -46,7 +47,7 @@ public class QueryUtils {
                 JSONObject feature = (JSONObject) features.get(i);
                 JSONObject properties = feature.getJSONObject(KEY_PROPERTIES);
 
-                result.add(new Earthquake(properties.getDouble(KEY_MAGNITUDE), properties.getString(KEY_PLACE), properties.getLong(KEY_TIME)));
+                result.add(new Earthquake(properties.getDouble(KEY_MAGNITUDE), properties.getString(KEY_PLACE), properties.getLong(KEY_TIME), properties.getString(KEY_URL)));
             }
 
         } catch (JSONException e) {
