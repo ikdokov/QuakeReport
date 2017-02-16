@@ -15,26 +15,25 @@
  */
 package com.example.android.quakereport;
 
+import android.app.Activity;
+import android.app.LoaderManager;
 import android.content.Intent;
+import android.content.Loader;
 import android.net.Uri;
-import android.os.AsyncTask;
 import android.os.Bundle;
-import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
 import android.widget.ListView;
 
-import java.io.IOException;
-import java.lang.reflect.Array;
 import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Date;
 
-public class EarthquakeActivity extends AppCompatActivity {
+public class EarthquakeActivity extends Activity implements LoaderManager.LoaderCallbacks<ArrayList<Earthquake>> {
 
     public static final String LOG_TAG = EarthquakeActivity.class.getName();
     private EarthquakeAdapter earthquakeAdapter;
+    private static final String USGS_QUERY_URL = "http://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&starttime=2014-01-01&endtime=2014-12-01&minmagnitude=7";
+
+    private static final int EARTHQUAKE_LOADER_ID = 1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -63,37 +62,26 @@ public class EarthquakeActivity extends AppCompatActivity {
 
         earthquakeListView.setAdapter(earthquakeAdapter);
 
-        new FetchEarthquakesTask().execute("http://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&starttime=2014-01-01&endtime=2014-12-01&minmagnitude=7");
+        getLoaderManager().initLoader(EARTHQUAKE_LOADER_ID, null, this);
+
     }
 
-    private class FetchEarthquakesTask extends AsyncTask<String, Void, ArrayList<Earthquake>> {
-
-        @Override
-        protected ArrayList<Earthquake> doInBackground(String... urls) {
-            ArrayList<Earthquake> result = new ArrayList<>();
-
-            if (urls.length < 1 || urls[0] == null) {
-                return null;
-            }
-
-            try {
-                String jsonString = QueryUtils.makeHttpRequest(QueryUtils.createUrl(urls[0]));
-                result = QueryUtils.extractEartquakes(jsonString);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-
-            return result;
-        }
-
-        @Override
-        protected void onPostExecute(ArrayList<Earthquake> earthquakes) {
-            if (earthquakes == null) {
-                return;
-            }
-
-            earthquakeAdapter.setEarthquakes(earthquakes);
-            earthquakeAdapter.notifyDataSetChanged();
-        }
+    @Override
+    public Loader<ArrayList<Earthquake>> onCreateLoader(int id, Bundle args) {
+        return new EarthquakeLoader(this, USGS_QUERY_URL);
     }
+
+    @Override
+    public void onLoadFinished(Loader<ArrayList<Earthquake>> loader, ArrayList<Earthquake> data) {
+        earthquakeAdapter.clear();
+
+        earthquakeAdapter.setEarthquakes(data);
+        earthquakeAdapter.notifyDataSetChanged();
+    }
+
+    @Override
+    public void onLoaderReset(Loader<ArrayList<Earthquake>> loader) {
+        earthquakeAdapter.clear();
+    }
+
 }
