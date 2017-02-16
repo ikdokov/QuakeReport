@@ -17,6 +17,7 @@ package com.example.android.quakereport;
 
 import android.content.Intent;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
@@ -24,6 +25,8 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 
+import java.io.IOException;
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
@@ -31,6 +34,7 @@ import java.util.Date;
 public class EarthquakeActivity extends AppCompatActivity {
 
     public static final String LOG_TAG = EarthquakeActivity.class.getName();
+    private EarthquakeAdapter earthquakeAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -41,13 +45,13 @@ public class EarthquakeActivity extends AppCompatActivity {
         ListView earthquakeListView = (ListView) findViewById(R.id.list);
 
         // Create a new {@link ArrayAdapter} of earthquakes
-        final EarthquakeAdapter adapter = new EarthquakeAdapter(
-                this, QueryUtils.extractEartquakes());
+        earthquakeAdapter = new EarthquakeAdapter(
+                this, new ArrayList<Earthquake>());
 
         earthquakeListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
-                Earthquake currentEartquake = adapter.getItem(i);
+                Earthquake currentEartquake = earthquakeAdapter.getItem(i);
 
                 Uri eartquakeUri = Uri.parse(currentEartquake.getUrl());
 
@@ -57,8 +61,39 @@ public class EarthquakeActivity extends AppCompatActivity {
             }
         });
 
-        // Set the adapter on the {@link ListView}
-        // so the earthquakes can be populated in the user interface
-        earthquakeListView.setAdapter(adapter);
+        earthquakeListView.setAdapter(earthquakeAdapter);
+
+        new FetchEarthquakesTask().execute("http://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&starttime=2014-01-01&endtime=2014-12-01&minmagnitude=7");
+    }
+
+    private class FetchEarthquakesTask extends AsyncTask<String, Void, ArrayList<Earthquake>> {
+
+        @Override
+        protected ArrayList<Earthquake> doInBackground(String... urls) {
+            ArrayList<Earthquake> result = new ArrayList<>();
+
+            if (urls.length < 1 || urls[0] == null) {
+                return null;
+            }
+
+            try {
+                String jsonString = QueryUtils.makeHttpRequest(QueryUtils.createUrl(urls[0]));
+                result = QueryUtils.extractEartquakes(jsonString);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            return result;
+        }
+
+        @Override
+        protected void onPostExecute(ArrayList<Earthquake> earthquakes) {
+            if (earthquakes == null) {
+                return;
+            }
+
+            earthquakeAdapter.setEarthquakes(earthquakes);
+            earthquakeAdapter.notifyDataSetChanged();
+        }
     }
 }

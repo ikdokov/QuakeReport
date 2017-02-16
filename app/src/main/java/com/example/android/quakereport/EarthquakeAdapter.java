@@ -39,9 +39,7 @@ public class EarthquakeAdapter extends ArrayAdapter<Earthquake> {
             listItemView = LayoutInflater.from(getContext()).inflate(R.layout.earthquake_list_item, parent, false);
         }
 
-        Earthquake earthquake = getItem(position);
-
-
+        Earthquake earthquake = earthquakes.get(position);
 
         TextView magnituteView = (TextView) listItemView.findViewById(R.id.magnitude);
         GradientDrawable magnitudeCircle = (GradientDrawable) magnituteView.getBackground();
@@ -120,5 +118,14 @@ public class EarthquakeAdapter extends ArrayAdapter<Earthquake> {
                 break;
         }
         return ContextCompat.getColor(getContext(), magnitudeColorResourceId);
+    }
+
+    public void setEarthquakes(ArrayList<Earthquake> earthquakes) {
+        this.earthquakes = earthquakes;
+    }
+
+    @Override
+    public int getCount() {
+        return this.earthquakes.size();
     }
 }
